@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Coaching Platform - Full UI</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f7f6; color: #333; }
+        .container { max-width: 700px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1, h2 { color: #2c3e50; text-align: center; }
+        input, select, button { padding: 12px; margin: 10px 0; width: 100%; box-sizing: border-box; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; }
+        button { background-color: #3498db; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { background-color: #2980b9; }
+        .section { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+        .result-box { background: #ecf0f1; padding: 15px; border-radius: 8px; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>AI Coaching Platform</h1>
+
+    <!-- 1. Create Student Profile -->
+    <div class="section">
+        <h2>1. Create Student Profile</h2>
+        <input type="text" id="name" placeholder="Full Name (e.g., John Doe)" required>
+        <input type="text" id="exam_target" placeholder="Exam Target (e.g., GATE / JEE)" required>
+        <input type="number" id="target_score" placeholder="Target Score (e.g., 95)" required>
+        <input type="date" id="exam_date" required>
+        <button onclick="createStudent()">Create Profile</button>
+        <p id="create-msg" style="color: green; font-weight: bold; text-align: center;"></p>
+    </div>
+
+    <!-- 2. View Student Dashboard -->
+    <div class="section">
+        <h2>2. Student Dashboard</h2>
+        <input type="number" id="student_id_dash" placeholder="Enter Student ID" required>
+        <button onclick="loadDashboard()" style="background-color: #2ecc71;">Open Dashboard</button>
+        
+        <div id="dashboard-result" class="result-box">
+            <h3>Dashboard Information</h3>
+            <p><strong>Name:</strong> <span id="res-name"></span></p>
+            <p><strong>Exam:</strong> <span id="res-exam"></span></p>
+            <p><strong>Target Score:</strong> <span id="res-score"></span></p>
+            <p style="color: #8e44ad; font-weight: bold;" id="res-msg"></p>
+        </div>
+    </div>
+
+    <!-- 3. Generate Mock Test -->
+    <div class="section">
+        <h2>3. Generate AI Mock Test</h2>
+        <input type="text" id="test_title" placeholder="Test Title (e.g., Java Basics)" required>
+        <input type="number" id="subject_id" placeholder="Subject ID (e.g., 1)" required>
+        <input type="number" id="duration" placeholder="Duration in Minutes (e.g., 30)" required>
+        <button onclick="generateTest()" style="background-color: #e67e22;">Generate Mock Test</button>
+        <p id="test-msg" style="color: #e67e22; font-weight: bold; text-align: center;"></p>
+    </div>
+
+    <!-- 4. Performance Prediction & Analytics -->
+    <div class="section">
+        <h2>4. Performance & Analytics</h2>
+        <input type="number" id="student_id_pred" placeholder="Enter Student ID" required>
+        <button onclick="loadPrediction()" style="background-color: #9b59b6;">View Score Prediction</button>
+
+        <div id="prediction-result" class="result-box">
+            <h3>Progress Report</h3>
+            <p><strong>Predicted Score Range:</strong> <span id="pred-score"></span></p>
+            <p><strong>Readiness Level:</strong> <span id="pred-readiness"></span></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE_URL = "http://127.0.0.1:8000";
+
+    async function createStudent() {
+        const studentData = {
+            name: document.getElementById("name").value,
+            exam_target: document.getElementById("exam_target").value,
+            target_score: parseInt(document.getElementById("target_score").value),
+            exam_date: document.getElementById("exam_date").value
+        };
+        const response = await fetch(`${API_BASE_URL}/students/profile`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(studentData)
+        });
+        const result = await response.json();
+        if (response.ok) {
+            document.getElementById("create-msg").innerText = `Success! Your Student ID is: ${result.student_id}`;
+        } else {
+            alert("Error: " + JSON.stringify(result));
+        }
+    }
+
+    async function loadDashboard() {
+        const studentId = document.getElementById("student_id_dash").value;
+        const response = await fetch(`${API_BASE_URL}/students/${studentId}/dashboard`);
+        const result = await response.json();
+        if (response.ok) {
+            document.getElementById("dashboard-result").style.display = "block";
+            document.getElementById("res-name").innerText = result.student_profile.name;
+            document.getElementById("res-exam").innerText = result.student_profile.exam_target;
+            document.getElementById("res-score").innerText = result.student_profile.target_score;
+            document.getElementById("res-msg").innerText = result.message;
+        } else {
+            alert("Student data not found!");
+        }
+    }
+
+    async function generateTest() {
+        const testData = {
+            title: document.getElementById("test_title").value,
+            subject_id: parseInt(document.getElementById("subject_id").value),
+            duration_minutes: parseInt(document.getElementById("duration").value),
+            total_questions: 5
+        };
+        const response = await fetch(`${API_BASE_URL}/tests/generate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(testData)
+        });
+        const result = await response.json();
+        if (response.ok) {
+            document.getElementById("test-msg").innerText = `Success! Test generated. Test ID: ${result.test_id}`;
+        } else {
+            alert("Error generating test");
+        }
+    }
+
+    async function loadPrediction() {
+        const studentId = document.getElementById("student_id_pred").value;
+        const response = await fetch(`${API_BASE_URL}/students/${studentId}/performance-prediction`);
+        const result = await response.json();
+        if (response.ok) {
+            document.getElementById("prediction-result").style.display = "block";
+            document.getElementById("pred-score").innerText = result.predicted_score_range;
+            document.getElementById("pred-readiness").innerText = result.readiness_level;
+        } else {
+            alert("Prediction information not available!");
+        }
+    }
+</script>
+</body>
+</html>
