@@ -190,6 +190,10 @@ def admin_analytics():
         "database_status": "PostgreSQL/Supabase Connected Simulation"
     }
 
+@app.get("/")
+def read_root():
+    return {"message": "AI Coaching Project is running successfully!"}
+
 if __name__ == "__main__":
     import uvicorn
     import os
